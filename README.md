@@ -2,6 +2,11 @@
 
 Microservicio para convertir imagenes a WebP para consumo desde una extension de Chrome.
 
+## Documentacion para consumidores
+
+- Guia de API para integradores: `API.md`
+- OpenAPI/Swagger: `/docs`, `/redoc`, `/openapi.json`
+
 ## Endpoints
 
 - `POST /convert`

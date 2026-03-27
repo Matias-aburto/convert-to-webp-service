@@ -1,24 +1,29 @@
-app = "webp-converter"
-primary_region = "scl"
+# fly.toml app configuration file generated for webp-converter-old-paper-9258 on 2026-03-27T12:28:56-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'webp-converter-old-paper-9258'
+primary_region = 'gru'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "8080"
-  MAX_UPLOAD_MB = "20"
-  REQUEST_TIMEOUT_SECONDS = "60"
-  MAX_PIXELS = "50000000"
+  MAX_PIXELS = '50000000'
+  MAX_UPLOAD_MB = '20'
+  PORT = '8080'
+  REQUEST_TIMEOUT_SECONDS = '60'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "suspend"
+  auto_stop_machines = 'suspend'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
 
 [[vm]]
-  cpu_kind = "shared"
+  cpu_kind = 'shared'
   cpus = 1
   memory_mb = 512
