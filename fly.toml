@@ -1,0 +1,24 @@
+app = "webp-converter"
+primary_region = "scl"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  MAX_UPLOAD_MB = "20"
+  REQUEST_TIMEOUT_SECONDS = "60"
+  MAX_PIXELS = "50000000"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
