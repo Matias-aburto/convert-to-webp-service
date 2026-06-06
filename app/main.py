@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 from pillow_heif import register_heif_opener
@@ -108,6 +108,20 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
 
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+STATIC_ASSET_VERSION = os.getenv("STATIC_ASSET_VERSION", "1")
+NO_CACHE_HEADERS = {"Cache-Control": "no-cache, must-revalidate"}
+
+
+class StaticCacheMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path == "/" or path.endswith("/index.html"):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        elif path.startswith("/static/") and path.endswith((".css", ".js")):
+            response.headers["Cache-Control"] = "public, max-age=3600, must-revalidate"
+        return response
+
 
 app = FastAPI(title="webp-converter", version="1.0.0")
 
@@ -120,6 +134,7 @@ app.add_middleware(
 )
 app.add_middleware(TimeoutMiddleware)
 app.add_middleware(RateLimitMiddleware)
+app.add_middleware(StaticCacheMiddleware)
 
 
 def parse_quality(quality_raw: Optional[str]) -> int:
@@ -251,8 +266,10 @@ def convert_to_webp_sync(
 
 
 @app.get("/")
-async def landing() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html")
+async def landing() -> HTMLResponse:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    html = html.replace("__STATIC_VERSION__", STATIC_ASSET_VERSION)
+    return HTMLResponse(html, headers=NO_CACHE_HEADERS)
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

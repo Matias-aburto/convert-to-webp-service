@@ -16,6 +16,7 @@ primary_region = 'gru'
   RATE_LIMIT_REQUESTS = '30'
   RATE_LIMIT_WINDOW_SECONDS = '60'
   REQUEST_TIMEOUT_SECONDS = '60'
+  STATIC_ASSET_VERSION = '2'
 
 [http_service]
   internal_port = 8080
