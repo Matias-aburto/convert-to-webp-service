@@ -4,10 +4,12 @@ import logging
 import os
 import time
 from collections import defaultdict
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import PlainTextResponse, Response
+from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -104,6 +106,8 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
             )
             return PlainTextResponse("Request timeout", status_code=504)
 
+
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 app = FastAPI(title="webp-converter", version="1.0.0")
 
@@ -244,6 +248,14 @@ def convert_to_webp_sync(
 
     img.save(output, **save_kwargs)
     return output.getvalue(), source_width, source_height, target_width, target_height
+
+
+@app.get("/")
+async def landing() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.options("/convert")

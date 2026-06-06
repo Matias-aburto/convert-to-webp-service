@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Convierte imágenes a WebP. Sube una o varias fotos, ajusta calidad y dimensiones."
+    />
+    <title>WebP Converter by Simetry</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <h1>
+          WebP Converter
+          <span class="title-signature">by Simetry</span>
+        </h1>
+        <p class="subtitle">Convierte imágenes a WebP con calidad y dimensiones personalizadas.</p>
+      </header>
+
+      <div class="workspace">
+        <section class="panel panel-upload">
+          <h2 class="panel-title">Imágenes</h2>
+          <label class="dropzone" id="dropzone" for="file-input">
+            <div class="dropzone-icon">↑</div>
+            <p class="dropzone-text">
+              <strong>Arrastra aquí</strong> o haz clic
+            </p>
+            <p class="dropzone-hint">JPEG · PNG · GIF · WebP · HEIC</p>
+          </label>
+          <input
+            id="file-input"
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.heic,.heif"
+            multiple
+          />
+          <div class="file-list" id="file-list"></div>
+        </section>
+
+        <section class="panel panel-settings">
+          <h2 class="panel-title">Exportación</h2>
+          <div class="settings">
+            <div class="field full">
+              <label for="quality">Calidad</label>
+              <div class="quality-row">
+                <input id="quality" type="range" min="1" max="100" value="80" />
+                <span class="quality-value" id="quality-value">80</span>
+              </div>
+            </div>
+            <div class="field full">
+              <label>Escala</label>
+              <div class="scale-chips" id="scale-chips">
+                <button type="button" class="scale-chip" data-scale="0.25">0.25×</button>
+                <button type="button" class="scale-chip" data-scale="0.5">0.5×</button>
+                <button type="button" class="scale-chip active" data-scale="1">1×</button>
+                <button type="button" class="scale-chip" data-scale="2">2×</button>
+                <button type="button" class="scale-chip scale-chip-custom" id="scale-custom-toggle">
+                  Custom
+                </button>
+              </div>
+              <input
+                id="scale-custom"
+                class="scale-custom-input is-hidden"
+                type="number"
+                min="0.01"
+                step="0.1"
+                placeholder="Ej. 1.5"
+              />
+            </div>
+            <div class="field">
+              <label for="max-width">Ancho máx.</label>
+              <input id="max-width" type="number" min="1" placeholder="—" />
+            </div>
+            <div class="field">
+              <label for="max-height">Alto máx.</label>
+              <input id="max-height" type="number" min="1" placeholder="—" />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" id="convert-btn" type="button" disabled>
+              Convertir a WebP
+            </button>
+            <button class="btn-ghost" id="clear-btn" type="button" disabled>Limpiar</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="output">
+        <p class="status-bar" id="status-bar"></p>
+        <div class="results" id="results"></div>
+      </div>
+
+      <footer>
+        Service powered by
+        <a href="https://simetry.cl" target="_blank" rel="noopener">simetry.cl</a>
+      </footer>
+    </div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
