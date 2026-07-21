@@ -29,21 +29,39 @@
 
       <div class="workspace">
         <section class="panel panel-upload">
-          <h2 class="panel-title">Imágenes</h2>
-          <label class="dropzone" id="dropzone" for="file-input">
-            <div class="dropzone-icon">↑</div>
-            <p class="dropzone-text">
-              <strong>Arrastra aquí</strong> o haz clic
-            </p>
-            <p class="dropzone-hint">JPEG · PNG · GIF · WebP · HEIC</p>
-          </label>
-          <input
-            id="file-input"
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.heic,.heif"
-            multiple
-          />
-          <div class="file-list" id="file-list"></div>
+          <div class="panel-tabs" role="tablist">
+            <button class="tab active" id="tab-originals" type="button" role="tab">
+              Originales <span class="tab-count" id="count-originals">0</span>
+            </button>
+            <button class="tab" id="tab-converted" type="button" role="tab">
+              Convertidas <span class="tab-count" id="count-converted">0</span>
+            </button>
+          </div>
+
+          <div class="tab-content" id="tab-content-originals">
+            <label class="dropzone" id="dropzone" for="file-input">
+              <div class="dropzone-icon">↑</div>
+              <p class="dropzone-text">
+                <strong>Arrastra aquí</strong> o haz clic
+              </p>
+              <p class="dropzone-hint">JPEG · PNG · GIF · WebP · HEIC</p>
+            </label>
+            <input
+              id="file-input"
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.heic,.heif"
+              multiple
+            />
+            <div class="file-list" id="file-list"></div>
+          </div>
+
+          <div class="tab-content is-hidden" id="tab-content-converted">
+            <button class="btn-ghost btn-zip" id="download-zip-btn" type="button" disabled>
+              Descargar todo (ZIP)
+            </button>
+            <p class="empty-hint" id="converted-empty">Aún no hay imágenes convertidas.</p>
+            <div class="results" id="results"></div>
+          </div>
         </section>
 
         <section class="panel panel-settings">
@@ -95,8 +113,10 @@
       </div>
 
       <div class="output">
+        <div class="progress is-hidden" id="progress">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
         <p class="status-bar" id="status-bar"></p>
-        <div class="results" id="results"></div>
       </div>
 
       <footer>
@@ -104,6 +124,7 @@
         <a href="https://simetry.cl" target="_blank" rel="noopener">simetry.cl</a>
       </footer>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
     <script src="/static/app.js?v=__STATIC_VERSION__" defer></script>
   </body>
 </html>

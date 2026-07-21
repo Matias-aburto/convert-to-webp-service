@@ -12,8 +12,19 @@ const scaleCustomToggle = document.getElementById("scale-custom-toggle");
 const scaleCustomInput = document.getElementById("scale-custom");
 const maxWidthInput = document.getElementById("max-width");
 const maxHeightInput = document.getElementById("max-height");
+const tabOriginals = document.getElementById("tab-originals");
+const tabConverted = document.getElementById("tab-converted");
+const tabContentOriginals = document.getElementById("tab-content-originals");
+const tabContentConverted = document.getElementById("tab-content-converted");
+const countOriginals = document.getElementById("count-originals");
+const countConverted = document.getElementById("count-converted");
+const downloadZipBtn = document.getElementById("download-zip-btn");
+const convertedEmpty = document.getElementById("converted-empty");
+const progressBar = document.getElementById("progress");
+const progressFill = document.getElementById("progress-fill");
 
 let files = [];
+let converted = [];
 
 qualityInput.addEventListener("input", () => {
   qualityValue.textContent = qualityInput.value;
@@ -35,6 +46,17 @@ scaleCustomToggle.addEventListener("click", () => {
     scaleCustomInput.focus();
   }
 });
+
+tabOriginals.addEventListener("click", () => switchTab("originals"));
+tabConverted.addEventListener("click", () => switchTab("converted"));
+
+function switchTab(tab) {
+  const showOriginals = tab === "originals";
+  tabOriginals.classList.toggle("active", showOriginals);
+  tabConverted.classList.toggle("active", !showOriginals);
+  tabContentOriginals.classList.toggle("is-hidden", !showOriginals);
+  tabContentConverted.classList.toggle("is-hidden", showOriginals);
+}
 
 fileInput.addEventListener("change", () => {
   addFiles([...fileInput.files]);
@@ -58,13 +80,18 @@ dropzone.addEventListener("drop", (event) => {
 
 clearBtn.addEventListener("click", () => {
   files = [];
+  converted = [];
   results.innerHTML = "";
   renderFileList();
+  updateConvertedUI();
   setStatus("");
+  setProgress(null, null);
   updateButtons();
+  switchTab("originals");
 });
 
 convertBtn.addEventListener("click", convertAll);
+downloadZipBtn.addEventListener("click", downloadZip);
 
 function addFiles(newFiles) {
   const images = newFiles.filter((file) => file.type.startsWith("image/") || isHeic(file));
@@ -88,6 +115,7 @@ function addFiles(newFiles) {
   renderFileList();
   updateButtons();
   setStatus("");
+  switchTab("originals");
 }
 
 function isHeic(file) {
@@ -102,7 +130,7 @@ function formatSize(bytes) {
 }
 
 function formatScaleLabel(scale) {
-  return Number.isInteger(scale) ? String(scale) : String(scale);
+  return String(scale);
 }
 
 function webpName(filename, scale, useScaleSuffix) {
@@ -179,6 +207,7 @@ function renderFileList() {
   }
 
   updateUploadPanel();
+  countOriginals.textContent = String(files.length);
 }
 
 function updateUploadPanel() {
@@ -191,12 +220,22 @@ function updateUploadPanel() {
 function updateButtons() {
   const hasFiles = files.length > 0;
   convertBtn.disabled = !hasFiles;
-  clearBtn.disabled = !hasFiles;
+  clearBtn.disabled = !hasFiles && converted.length === 0;
 }
 
 function setStatus(message, active = false) {
   statusBar.textContent = message;
   statusBar.classList.toggle("active", active);
+}
+
+function setProgress(done, total) {
+  if (total === null) {
+    progressBar.classList.add("is-hidden");
+    progressFill.style.width = "0%";
+    return;
+  }
+  progressBar.classList.remove("is-hidden");
+  progressFill.style.width = `${Math.round((done / total) * 100)}%`;
 }
 
 function buildFormData(file, scale) {
@@ -244,7 +283,8 @@ function addResult(file, scale, outcome, useScaleSuffix) {
   meta.className = "result-meta";
 
   if (outcome.ok) {
-    name.textContent = webpName(file.name, scale, useScaleSuffix);
+    const outputName = webpName(file.name, scale, useScaleSuffix);
+    name.textContent = outputName;
     meta.textContent = `${formatScaleLabel(scale)}× · ${formatSize(file.size)} → ${formatSize(outcome.size)}`;
     info.append(name, meta);
     item.append(info);
@@ -257,7 +297,7 @@ function addResult(file, scale, outcome, useScaleSuffix) {
       const url = URL.createObjectURL(outcome.blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = webpName(file.name, scale, useScaleSuffix);
+      link.download = outputName;
       link.click();
       URL.revokeObjectURL(url);
     });
@@ -271,6 +311,63 @@ function addResult(file, scale, outcome, useScaleSuffix) {
   }
 
   results.append(item);
+}
+
+function updateConvertedUI() {
+  countConverted.textContent = String(converted.length);
+  downloadZipBtn.disabled = converted.length === 0;
+  convertedEmpty.classList.toggle("is-hidden", results.children.length > 0);
+}
+
+function uniqueZipName(name, usedNames) {
+  if (!usedNames.has(name)) {
+    usedNames.add(name);
+    return name;
+  }
+  const dot = name.lastIndexOf(".");
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : "";
+  let counter = 2;
+  let candidate = `${base}_${counter}${ext}`;
+  while (usedNames.has(candidate)) {
+    counter += 1;
+    candidate = `${base}_${counter}${ext}`;
+  }
+  usedNames.add(candidate);
+  return candidate;
+}
+
+async function downloadZip() {
+  if (converted.length === 0) return;
+
+  if (typeof JSZip === "undefined") {
+    setStatus("No se pudo cargar la librería ZIP. Revisa tu conexión.");
+    return;
+  }
+
+  downloadZipBtn.disabled = true;
+  setStatus("Generando ZIP…", true);
+
+  try {
+    const zip = new JSZip();
+    const usedNames = new Set();
+    for (const entry of converted) {
+      zip.file(uniqueZipName(entry.name, usedNames), entry.blob);
+    }
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(zipBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "webp-convertidas.zip";
+    link.click();
+    URL.revokeObjectURL(url);
+    setStatus(`ZIP con ${converted.length} archivo${converted.length > 1 ? "s" : ""} descargado.`);
+  } catch (error) {
+    setStatus(`Error generando ZIP: ${error.message}`);
+  } finally {
+    downloadZipBtn.disabled = converted.length === 0;
+  }
 }
 
 async function convertAll() {
@@ -287,22 +384,32 @@ async function convertAll() {
   convertBtn.disabled = true;
   clearBtn.disabled = true;
   results.innerHTML = "";
+  converted = [];
+  updateConvertedUI();
 
   const useScaleSuffix = scales.length > 1 || scales[0] !== 1;
   const jobs = files.flatMap((file) => scales.map((scale) => ({ file, scale })));
   let completed = 0;
+  setProgress(0, jobs.length);
 
   for (const job of jobs) {
     setStatus(`Convirtiendo ${completed + 1} de ${jobs.length}…`, true);
     try {
       const result = await convertFile(job.file, job.scale);
+      converted.push({
+        name: webpName(job.file.name, job.scale, useScaleSuffix),
+        blob: result.blob,
+      });
       addResult(job.file, job.scale, { ok: true, blob: result.blob, size: result.size }, useScaleSuffix);
     } catch (error) {
       addResult(job.file, job.scale, { ok: false, error: error.message }, useScaleSuffix);
     }
     completed += 1;
+    setProgress(completed, jobs.length);
+    updateConvertedUI();
   }
 
+  setProgress(null, null);
   const errors = results.querySelectorAll(".result-item.error").length;
   if (errors === 0) {
     setStatus(`${jobs.length} archivo${jobs.length > 1 ? "s" : ""} generado${jobs.length > 1 ? "s" : ""}.`);
@@ -311,6 +418,8 @@ async function convertAll() {
   }
 
   updateButtons();
+  switchTab("converted");
 }
 
 updateButtons();
+updateConvertedUI();
